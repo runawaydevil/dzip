@@ -71,7 +71,7 @@
                 <div id="result" class="mt-4 hidden">
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
                         <strong class="font-bold">Sucesso!</strong>
-                        <span class="block sm:inline"> Seus arquivos foram compactados com sucesso.</span>
+                        <span class="block sm:inline"> Seus arquivos foram compactados com sucesso em um arquivo ZIP.</span>
                         <div class="mt-2">
                             <p class="text-sm">Link para download:</p>
                             <div class="flex mt-1">
@@ -200,6 +200,7 @@
                     const fullLink = `${window.location.origin}/download/${data.share_link}`;
                     shareLink.value = fullLink;
                     result.classList.remove('hidden');
+                    result.querySelector('span').textContent = ' Seus arquivos foram compactados com sucesso em um arquivo ZIP.';
                 } else {
                     alert(data.error || 'Erro ao compactar arquivos');
                 }

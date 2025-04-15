@@ -106,10 +106,11 @@ def download_file(share_link):
     file_record.download_count += 1
     db.session.commit()
     
+    # Retorna o arquivo ZIP compactado
     return send_file(
         file_record.file_path,
         as_attachment=True,
-        download_name=file_record.original_filename
+        download_name=f"{file_record.original_filename}.zip"  # Garante que o arquivo baixado tenha extensão .zip
     )
 
 if __name__ == '__main__':
