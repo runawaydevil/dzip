@@ -14,7 +14,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dzip.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
+app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_UPLOAD_SIZE', 500 * 1024 * 1024))  # 500MB
 app.config['ALLOWED_EXTENSIONS'] = {'zip', 'rar'}
 
 # Criar diretório de uploads se não existir
@@ -29,7 +29,7 @@ class File(db.Model):
     original_filename = db.Column(db.String(255), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=7))
+    expires_at = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=int(os.environ.get('LINK_EXPIRATION_DAYS', 7))))
     download_count = db.Column(db.Integer, default=0)
     share_link = db.Column(db.String(255), unique=True)
 
@@ -47,8 +47,9 @@ def upload_file():
     
     files = request.files.getlist('files[]')
     
-    if len(files) > 100:
-        return jsonify({'error': 'Máximo de 100 arquivos permitidos'}), 400
+    max_files = int(os.environ.get('MAX_FILES_PER_UPLOAD', 100))
+    if len(files) > max_files:
+        return jsonify({'error': f'Máximo de {max_files} arquivos permitidos'}), 400
     
     # Verificar tamanho total dos arquivos
     total_size = sum(len(file.read()) for file in files)
@@ -114,4 +115,9 @@ def download_file(share_link):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True) 
+    
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    app.run(host=host, port=port, debug=debug) 
