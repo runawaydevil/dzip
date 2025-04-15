@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DZip - Compartilhamento de Arquivos</title>
+    <title>DZip - Compactador e Compartilhador de Arquivos</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
@@ -42,7 +42,7 @@
             <h1 class="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-file-archive text-blue-500"></i> DZip
             </h1>
-            <p class="text-sm sm:text-base text-gray-600">Compartilhe seus arquivos com segurança</p>
+            <p class="text-sm sm:text-base text-gray-600">Compacte, extraia e compartilhe seus arquivos com facilidade</p>
             <div class="mt-2 sm:mt-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-2 sm:p-4 max-w-md mx-auto text-xs sm:text-sm" role="alert">
                 <p class="font-bold">Aviso</p>
                 <p>Os arquivos compartilhados estarão disponíveis por 7 dias. Após esse período, eles serão automaticamente removidos.</p>
@@ -51,34 +51,91 @@
 
         <main class="max-w-4xl mx-auto">
             <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-                <form id="uploadForm" class="space-y-4">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center drop-zone" id="dropZone">
-                        <input type="file" name="file" class="hidden" id="fileInput">
-                        <label for="fileInput" class="cursor-pointer">
-                            <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-sm sm:text-base text-gray-600">Arraste um arquivo aqui ou clique para selecionar</p>
-                            <p class="text-xs sm:text-sm text-gray-500 mt-2">Máximo de 100MB</p>
-                        </label>
-                    </div>
-                    <div id="fileInfo" class="hidden">
-                        <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivo selecionado:</h3>
-                        <p class="text-sm sm:text-base text-gray-600"></p>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
-                        <i class="fas fa-upload mr-2"></i>Enviar Arquivo
+                <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0 mb-4 sm:mb-6">
+                    <button id="shareTab" class="flex-1 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm sm:text-base">
+                        <i class="fas fa-share-alt mr-2"></i>Compartilhar
                     </button>
-                </form>
+                    <button id="zipTab" class="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm sm:text-base">
+                        <i class="fas fa-file-archive mr-2"></i>Compactar
+                    </button>
+                    <button id="extractTab" class="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm sm:text-base">
+                        <i class="fas fa-file-zipper mr-2"></i>Extrair
+                    </button>
+                </div>
 
-                <div id="shareLink" class="hidden mt-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
-                    <p class="font-bold">Arquivo enviado com sucesso!</p>
-                    <p class="mt-2">Link de compartilhamento:</p>
-                    <div class="flex items-center mt-2">
-                        <input type="text" id="linkInput" class="flex-1 p-2 border rounded-l" readonly>
-                        <button onclick="copyLink()" class="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600">
-                            <i class="fas fa-copy"></i>
+                <!-- Seção de Compartilhamento -->
+                <div id="shareSection">
+                    <form id="uploadForm" class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center drop-zone" id="shareDropZone">
+                            <input type="file" name="file" class="hidden" id="shareFileInput">
+                            <label for="shareFileInput" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm sm:text-base text-gray-600">Arraste um arquivo aqui ou clique para selecionar</p>
+                                <p class="text-xs sm:text-sm text-gray-500 mt-2">Máximo de 100MB</p>
+                            </label>
+                        </div>
+                        <div id="shareFileInfo" class="hidden">
+                            <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivo selecionado:</h3>
+                            <p class="text-sm sm:text-base text-gray-600"></p>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
+                            <i class="fas fa-upload mr-2"></i>Enviar Arquivo
                         </button>
+                    </form>
+
+                    <div id="shareLink" class="hidden mt-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
+                        <p class="font-bold">Arquivo enviado com sucesso!</p>
+                        <p class="mt-2">Link de compartilhamento:</p>
+                        <div class="flex items-center mt-2">
+                            <input type="text" id="linkInput" class="flex-1 p-2 border rounded-l" readonly>
+                            <button onclick="copyLink()" class="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs mt-2">Este link expira em: <span id="expiryDate"></span></p>
                     </div>
-                    <p class="text-xs mt-2">Este link expira em: <span id="expiryDate"></span></p>
+                </div>
+
+                <!-- Seção de Compactação -->
+                <div id="zipSection" class="hidden">
+                    <form id="zipForm" class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center drop-zone" id="zipDropZone">
+                            <input type="file" name="files[]" multiple class="hidden" id="zipFileInput">
+                            <label for="zipFileInput" class="cursor-pointer">
+                                <i class="fas fa-file-archive text-3xl sm:text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm sm:text-base text-gray-600">Arraste arquivos aqui ou clique para selecionar</p>
+                                <p class="text-xs sm:text-sm text-gray-500 mt-2">Máximo de 10 arquivos, 500MB no total</p>
+                            </label>
+                        </div>
+                        <div id="zipFileList" class="hidden">
+                            <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivos selecionados:</h3>
+                            <ul class="space-y-2"></ul>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
+                            <i class="fas fa-file-archive mr-2"></i>Compactar Arquivos
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Seção de Extração -->
+                <div id="extractSection" class="hidden">
+                    <form id="extractForm" class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center drop-zone" id="extractDropZone">
+                            <input type="file" name="zip_file" class="hidden" id="extractFileInput" accept=".zip">
+                            <label for="extractFileInput" class="cursor-pointer">
+                                <i class="fas fa-file-zipper text-3xl sm:text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm sm:text-base text-gray-600">Arraste um arquivo ZIP aqui ou clique para selecionar</p>
+                                <p class="text-xs sm:text-sm text-gray-500 mt-2">Máximo de 500MB</p>
+                            </label>
+                        </div>
+                        <div id="extractFileInfo" class="hidden">
+                            <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivo selecionado:</h3>
+                            <p class="text-sm sm:text-base text-gray-600"></p>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
+                            <i class="fas fa-file-zipper mr-2"></i>Extrair Arquivo
+                        </button>
+                    </form>
                 </div>
             </div>
         </main>
@@ -89,18 +146,77 @@
     </footer>
 
     <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileInfoP = fileInfo.querySelector('p');
+        // Gerenciamento das abas
+        const shareTab = document.getElementById('shareTab');
+        const zipTab = document.getElementById('zipTab');
+        const extractTab = document.getElementById('extractTab');
+        const shareSection = document.getElementById('shareSection');
+        const zipSection = document.getElementById('zipSection');
+        const extractSection = document.getElementById('extractSection');
+
+        shareTab.addEventListener('click', () => {
+            shareTab.classList.add('bg-blue-500', 'text-white');
+            shareTab.classList.remove('bg-gray-200', 'text-gray-700');
+            zipTab.classList.add('bg-gray-200', 'text-gray-700');
+            zipTab.classList.remove('bg-blue-500', 'text-white');
+            extractTab.classList.add('bg-gray-200', 'text-gray-700');
+            extractTab.classList.remove('bg-blue-500', 'text-white');
+            shareSection.classList.remove('hidden');
+            zipSection.classList.add('hidden');
+            extractSection.classList.add('hidden');
+        });
+
+        zipTab.addEventListener('click', () => {
+            zipTab.classList.add('bg-blue-500', 'text-white');
+            zipTab.classList.remove('bg-gray-200', 'text-gray-700');
+            shareTab.classList.add('bg-gray-200', 'text-gray-700');
+            shareTab.classList.remove('bg-blue-500', 'text-white');
+            extractTab.classList.add('bg-gray-200', 'text-gray-700');
+            extractTab.classList.remove('bg-blue-500', 'text-white');
+            zipSection.classList.remove('hidden');
+            shareSection.classList.add('hidden');
+            extractSection.classList.add('hidden');
+        });
+
+        extractTab.addEventListener('click', () => {
+            extractTab.classList.add('bg-blue-500', 'text-white');
+            extractTab.classList.remove('bg-gray-200', 'text-gray-700');
+            shareTab.classList.add('bg-gray-200', 'text-gray-700');
+            shareTab.classList.remove('bg-blue-500', 'text-white');
+            zipTab.classList.add('bg-gray-200', 'text-gray-700');
+            zipTab.classList.remove('bg-blue-500', 'text-white');
+            extractSection.classList.remove('hidden');
+            shareSection.classList.add('hidden');
+            zipSection.classList.add('hidden');
+        });
+
+        // Funções de Compartilhamento
+        const shareDropZone = document.getElementById('shareDropZone');
+        const shareFileInput = document.getElementById('shareFileInput');
+        const shareFileInfo = document.getElementById('shareFileInfo');
+        const shareFileInfoP = shareFileInfo.querySelector('p');
         const uploadForm = document.getElementById('uploadForm');
         const shareLink = document.getElementById('shareLink');
         const linkInput = document.getElementById('linkInput');
         const expiryDate = document.getElementById('expiryDate');
 
-        // Drag and drop
+        // Funções de Compactação
+        const zipDropZone = document.getElementById('zipDropZone');
+        const zipFileInput = document.getElementById('zipFileInput');
+        const zipFileList = document.getElementById('zipFileList');
+        const zipFileListUl = zipFileList.querySelector('ul');
+        const zipForm = document.getElementById('zipForm');
+
+        // Funções de Extração
+        const extractDropZone = document.getElementById('extractDropZone');
+        const extractFileInput = document.getElementById('extractFileInput');
+        const extractFileInfo = document.getElementById('extractFileInfo');
+        const extractFileInfoP = extractFileInfo.querySelector('p');
+        const extractForm = document.getElementById('extractForm');
+
+        // Drag and drop para compartilhamento
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
+            shareDropZone.addEventListener(eventName, preventDefaults, false);
         });
 
         function preventDefaults(e) {
@@ -109,39 +225,39 @@
         }
 
         ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
+            shareDropZone.addEventListener(eventName, highlight, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
+            shareDropZone.addEventListener(eventName, unhighlight, false);
         });
 
         function highlight(e) {
-            dropZone.classList.add('dragover');
+            e.currentTarget.classList.add('dragover');
         }
 
         function unhighlight(e) {
-            dropZone.classList.remove('dragover');
+            e.currentTarget.classList.remove('dragover');
         }
 
-        dropZone.addEventListener('drop', handleDrop, false);
+        shareDropZone.addEventListener('drop', handleShareDrop, false);
 
-        function handleDrop(e) {
+        function handleShareDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            fileInput.files = files;
-            updateFileInfo();
+            shareFileInput.files = files;
+            updateShareFileInfo();
         }
 
-        fileInput.addEventListener('change', updateFileInfo);
+        shareFileInput.addEventListener('change', updateShareFileInfo);
 
-        function updateFileInfo() {
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                fileInfo.classList.remove('hidden');
-                fileInfoP.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        function updateShareFileInfo() {
+            if (shareFileInput.files.length > 0) {
+                const file = shareFileInput.files[0];
+                shareFileInfo.classList.remove('hidden');
+                shareFileInfoP.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
             } else {
-                fileInfo.classList.add('hidden');
+                shareFileInfo.classList.add('hidden');
             }
         }
 
@@ -149,7 +265,7 @@
             e.preventDefault();
             
             const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            formData.append('file', shareFileInput.files[0]);
 
             try {
                 const response = await fetch('/upload', {
@@ -164,12 +280,141 @@
                     linkInput.value = `${window.location.origin}/download/${data.share_link}`;
                     expiryDate.textContent = new Date(data.expires_at).toLocaleString('pt-BR');
                     uploadForm.reset();
-                    fileInfo.classList.add('hidden');
+                    shareFileInfo.classList.add('hidden');
                 } else {
                     alert(data.error || 'Erro ao enviar arquivo');
                 }
             } catch (error) {
                 alert('Erro ao enviar arquivo');
+            }
+        });
+
+        // Drag and drop para compactação
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            zipDropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            zipDropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            zipDropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        zipDropZone.addEventListener('drop', handleZipDrop, false);
+
+        function handleZipDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            zipFileInput.files = files;
+            updateZipFileList();
+        }
+
+        zipFileInput.addEventListener('change', updateZipFileList);
+
+        function updateZipFileList() {
+            zipFileListUl.innerHTML = '';
+            if (zipFileInput.files.length > 0) {
+                zipFileList.classList.remove('hidden');
+                Array.from(zipFileInput.files).forEach(file => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between bg-gray-50 p-2 rounded text-xs sm:text-sm';
+                    li.innerHTML = `
+                        <span class="flex items-center truncate">
+                            <i class="fas fa-file text-gray-400 mr-2"></i>
+                            <span class="truncate">${file.name}</span>
+                        </span>
+                        <span class="text-gray-500 ml-2 whitespace-nowrap">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    `;
+                    zipFileListUl.appendChild(li);
+                });
+            } else {
+                zipFileList.classList.add('hidden');
+            }
+        }
+
+        zipForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            Array.from(zipFileInput.files).forEach(file => {
+                formData.append('files[]', file);
+            });
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `/extract/${data.share_link}`;
+                } else {
+                    alert(data.error || 'Erro ao compactar arquivos');
+                }
+            } catch (error) {
+                alert('Erro ao compactar arquivos');
+            }
+        });
+
+        // Drag and drop para extração
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            extractDropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            extractDropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            extractDropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        extractDropZone.addEventListener('drop', handleExtractDrop, false);
+
+        function handleExtractDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            extractFileInput.files = files;
+            updateExtractFileInfo();
+        }
+
+        extractFileInput.addEventListener('change', updateExtractFileInfo);
+
+        function updateExtractFileInfo() {
+            if (extractFileInput.files.length > 0) {
+                const file = extractFileInput.files[0];
+                extractFileInfo.classList.remove('hidden');
+                extractFileInfoP.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            } else {
+                extractFileInfo.classList.add('hidden');
+            }
+        }
+
+        extractForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('zip_file', extractFileInput.files[0]);
+
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `/extract/${data.share_link}`;
+                } else {
+                    alert(data.error || 'Erro ao extrair arquivo');
+                }
+            } catch (error) {
+                alert('Erro ao extrair arquivo');
             }
         });
 
