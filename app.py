@@ -104,6 +104,51 @@ def upload_file():
         'share_link': share_link
     })
 
+@app.route('/extract', methods=['POST'])
+def extract():
+    if 'zip_file' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['zip_file']
+    if file.filename == '':
+        return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
+    
+    if not file.filename.endswith('.zip'):
+        return jsonify({'error': 'Apenas arquivos ZIP são suportados'}), 400
+    
+    # Verificar tamanho do arquivo
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    
+    if size > app.config['MAX_CONTENT_LENGTH']:
+        return jsonify({'error': 'Arquivo muito grande (máximo 500MB)'}), 400
+    
+    # Salvar arquivo temporariamente
+    filename = secure_filename(file.filename)
+    temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{filename}")
+    file.save(temp_path)
+    
+    try:
+        # Criar registro no banco de dados
+        share_link = str(uuid.uuid4())
+        file_record = File(
+            filename=os.path.basename(temp_path),
+            original_filename=filename,
+            file_path=temp_path,
+            share_link=share_link,
+            is_extracted=False
+        )
+        db.session.add(file_record)
+        db.session.commit()
+        
+        return redirect(url_for('extract_file', share_link=share_link))
+        
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        return jsonify({'error': 'Erro ao processar arquivo'}), 500
+
 @app.route('/extract/<share_link>')
 def extract_file(share_link):
     file_record = File.query.filter_by(share_link=share_link).first_or_404()

@@ -4,6 +4,7 @@
 [![Flask](https://img.shields.io/badge/Flask-2.0%2B-green)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Stable-brightgreen)](https://github.com/RunawayDevil/dzip)
+[![Port](https://img.shields.io/badge/Port-5009-blue)](https://github.com/RunawayDevil/dzip)
 
 DZip é uma aplicação web moderna para compactação e extração de arquivos, desenvolvida com Flask e Python. Oferece uma interface intuitiva e recursos avançados para gerenciamento de arquivos.
 
@@ -12,7 +13,7 @@ DZip é uma aplicação web moderna para compactação e extração de arquivos,
 - **Compactação de Arquivos**
   - Upload de múltiplos arquivos (até 10)
   - Compressão nível 9 (máxima)
-  - Limite de tamanho total de 100MB
+  - Limite de tamanho total de 500MB
   - Links de download temporários
   - Interface drag-and-drop
 
@@ -54,10 +55,12 @@ pip install -r requirements.txt
 # Windows
 set FLASK_APP=app.py
 set FLASK_ENV=development
+set PORT=5009
 
 # Linux/Mac
 export FLASK_APP=app.py
 export FLASK_ENV=development
+export PORT=5009
 ```
 
 5. Inicialize o banco de dados:
@@ -69,7 +72,14 @@ flask db upgrade
 
 6. Execute o aplicativo:
 ```bash
-flask run
+python app.py
+```
+
+O aplicativo estará disponível em `http://localhost:5009`
+
+Para produção, recomenda-se usar o Gunicorn:
+```bash
+gunicorn -w 4 -b 0.0.0.0:5009 app:app
 ```
 
 ## ⚙️ Configuração
@@ -77,24 +87,27 @@ flask run
 O DZip pode ser configurado através de variáveis de ambiente:
 
 - `MAX_UPLOAD_SIZE`: Tamanho máximo de upload (padrão: 500MB)
-- `MAX_FILES_PER_UPLOAD`: Número máximo de arquivos por upload (padrão: 100)
+- `MAX_FILES_PER_UPLOAD`: Número máximo de arquivos por upload (padrão: 10)
 - `LINK_EXPIRATION_DAYS`: Dias até a expiração dos links (padrão: 7)
 - `SECRET_KEY`: Chave secreta para a aplicação
 - `DATABASE_URL`: URL do banco de dados (padrão: sqlite:///dzip.db)
+- `PORT`: Porta do servidor (padrão: 5009)
+- `HOST`: Host do servidor (padrão: 0.0.0.0)
+- `DEBUG`: Modo de debug (padrão: False)
 
 ## 📝 Uso
 
 1. **Compactar Arquivos**
    - Acesse a aba "Compactar"
-   - Arraste ou selecione os arquivos
+   - Arraste ou selecione os arquivos (até 10 arquivos, máximo 500MB total)
    - Clique em "Compactar Arquivos"
-   - Copie o link gerado
+   - Copie o link gerado (válido por 7 dias)
 
 2. **Extrair Arquivos**
    - Acesse a aba "Extrair"
-   - Arraste ou selecione o arquivo ZIP
+   - Arraste ou selecione o arquivo ZIP (máximo 500MB)
    - Clique em "Extrair Arquivo"
-   - Baixe os arquivos extraídos
+   - Baixe os arquivos extraídos (disponíveis por 1 hora)
 
 ## 🤝 Contribuindo
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1] - 2025-04-15
+
+### Corrigido
+- Corrigido erro na rota de upload no template
+- Implementada função de extração de arquivos
+- Ajustada porta padrão para 5009
+- Atualizada documentação com informações mais precisas
+- Corrigidos limites de upload (500MB e 10 arquivos)
+
 ## [1.1.0] - 2025-02-20
 
 ### Adicionado
