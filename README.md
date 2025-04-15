@@ -1,5 +1,19 @@
 # DZip - Compactador e Compartilhador de Arquivos
 
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.0.1-green.svg)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Status](https://img.shields.io/badge/Status-Stable-brightgreen.svg)](https://github.com/RunawayDevil/dzip)
+[![Downloads](https://img.shields.io/badge/Downloads-100%2B-orange.svg)](https://github.com/RunawayDevil/dzip)
+
+## 🚀 Hackers
+
+- **Compressão Avançada**: Use o parâmetro `?compress=ultra` para ativar compressão máxima
+- **Download Rápido**: Adicione `?turbo=1` ao link de download para acelerar a transferência
+- **Preview**: Adicione `?preview=1` para visualizar arquivos antes de baixar
+- **Bypass**: Use `?force=1` para ignorar limites de tamanho (requer autenticação)
+- **Batch**: Envie múltiplos arquivos usando `curl -F "files[]=@file1" -F "files[]=@file2"`
+
 DZip é uma aplicação web desenvolvida em Python/Flask que permite compactar, extrair e compartilhar arquivos de forma simples e segura.
 
 ## Funcionalidades
