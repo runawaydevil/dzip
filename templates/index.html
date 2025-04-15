@@ -309,9 +309,19 @@
             const files = dt.files;
             zipFileInput.files = files;
             updateZipFileList();
+            // Upload automático após seleção
+            if (files.length > 0) {
+                uploadZipFiles();
+            }
         }
 
-        zipFileInput.addEventListener('change', updateZipFileList);
+        zipFileInput.addEventListener('change', () => {
+            updateZipFileList();
+            // Upload automático após seleção
+            if (zipFileInput.files.length > 0) {
+                uploadZipFiles();
+            }
+        });
 
         function updateZipFileList() {
             zipFileListUl.innerHTML = '';
@@ -326,6 +336,9 @@
                             <span class="truncate">${file.name}</span>
                         </span>
                         <span class="text-gray-500 ml-2 whitespace-nowrap">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                        <button onclick="removeFile(this, '${file.name}')" class="text-red-500 hover:text-red-700 ml-2">
+                            <i class="fas fa-times"></i>
+                        </button>
                     `;
                     zipFileListUl.appendChild(li);
                 });
@@ -334,9 +347,26 @@
             }
         }
 
-        zipForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        function removeFile(button, filename) {
+            const dt = new DataTransfer();
+            const files = zipFileInput.files;
             
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].name !== filename) {
+                    dt.items.add(files[i]);
+                }
+            }
+            
+            zipFileInput.files = dt.files;
+            updateZipFileList();
+            
+            // Se ainda houver arquivos, faz upload automático
+            if (dt.files.length > 0) {
+                uploadZipFiles();
+            }
+        }
+
+        async function uploadZipFiles() {
             const formData = new FormData();
             Array.from(zipFileInput.files).forEach(file => {
                 formData.append('files[]', file);
@@ -358,7 +388,7 @@
             } catch (error) {
                 alert('Erro ao compactar arquivos');
             }
-        });
+        }
 
         // Drag and drop para extração
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -380,9 +410,19 @@
             const files = dt.files;
             extractFileInput.files = files;
             updateExtractFileInfo();
+            // Upload automático após seleção
+            if (files.length > 0) {
+                uploadExtractFile();
+            }
         }
 
-        extractFileInput.addEventListener('change', updateExtractFileInfo);
+        extractFileInput.addEventListener('change', () => {
+            updateExtractFileInfo();
+            // Upload automático após seleção
+            if (extractFileInput.files.length > 0) {
+                uploadExtractFile();
+            }
+        });
 
         function updateExtractFileInfo() {
             if (extractFileInput.files.length > 0) {
@@ -394,9 +434,7 @@
             }
         }
 
-        extractForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        async function uploadExtractFile() {
             const formData = new FormData();
             formData.append('zip_file', extractFileInput.files[0]);
 
@@ -416,7 +454,7 @@
             } catch (error) {
                 alert('Erro ao extrair arquivo');
             }
-        });
+        }
 
         function copyLink() {
             linkInput.select();

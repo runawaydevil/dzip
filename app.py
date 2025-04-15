@@ -10,6 +10,7 @@ import rarfile
 import uuid
 import zipfile
 import shutil
+import tempfile
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -49,55 +50,117 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
+    if 'file' not in request.files and 'files[]' not in request.files:
         return jsonify({'error': 'Nenhum arquivo enviado'}), 400
     
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
-    
-    # Verificar tamanho do arquivo
-    file.seek(0, os.SEEK_END)
-    size = file.tell()
-    file.seek(0)
-    
-    if size > app.config['MAX_CONTENT_LENGTH']:
-        return jsonify({'error': 'Arquivo muito grande (máximo 100MB)'}), 400
-    
-    # Salvar arquivo
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{filename}")
-    file.save(file_path)
-    
-    try:
-        # Criar registro no banco de dados
-        share_link = str(uuid.uuid4())
-        file_record = File(
-            filename=os.path.basename(file_path),
-            original_filename=filename,
-            file_path=file_path,
-            share_link=share_link,
-            is_extracted=False
-        )
-        db.session.add(file_record)
-        db.session.commit()
+    # Verificar se é upload único ou múltiplo
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
         
-        return jsonify({
-            'message': 'Arquivo enviado com sucesso',
-            'share_link': share_link,
-            'expires_at': file_record.expires_at.strftime('%Y-%m-%d %H:%M:%S')
-        })
+        # Verificar tamanho do arquivo
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
         
-    except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        return jsonify({'error': 'Erro ao processar arquivo'}), 500
+        if size > app.config['MAX_CONTENT_LENGTH']:
+            return jsonify({'error': 'Arquivo muito grande (máximo 100MB)'}), 400
+        
+        # Salvar arquivo
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{filename}")
+        file.save(file_path)
+        
+        try:
+            # Criar registro no banco de dados
+            share_link = str(uuid.uuid4())
+            file_record = File(
+                filename=os.path.basename(file_path),
+                original_filename=filename,
+                file_path=file_path,
+                share_link=share_link,
+                is_extracted=False
+            )
+            db.session.add(file_record)
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Arquivo enviado com sucesso',
+                'share_link': share_link,
+                'expires_at': file_record.expires_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+            
+        except Exception as e:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return jsonify({'error': 'Erro ao processar arquivo'}), 500
+    
+    else:  # Upload múltiplo para compactação
+        files = request.files.getlist('files[]')
+        if not files or files[0].filename == '':
+            return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
+        
+        # Verificar tamanho total dos arquivos
+        total_size = 0
+        for file in files:
+            file.seek(0, os.SEEK_END)
+            total_size += file.tell()
+            file.seek(0)
+        
+        if total_size > 500 * 1024 * 1024:  # 500MB
+            return jsonify({'error': 'Tamanho total dos arquivos excede 500MB'}), 400
+        
+        # Criar diretório temporário para os arquivos
+        temp_dir = tempfile.mkdtemp()
+        try:
+            # Salvar arquivos temporariamente
+            saved_files = []
+            for file in files:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(temp_dir, filename)
+                file.save(file_path)
+                saved_files.append(file_path)
+            
+            # Criar arquivo ZIP
+            zip_filename = f"{uuid.uuid4()}.zip"
+            zip_path = os.path.join(app.config['UPLOAD_FOLDER'], zip_filename)
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, 9) as zipf:
+                for file_path in saved_files:
+                    zipf.write(file_path, os.path.basename(file_path))
+            
+            # Criar registro no banco de dados
+            share_link = str(uuid.uuid4())
+            file_record = File(
+                filename=zip_filename,
+                original_filename=f"arquivos_compactados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                file_path=zip_path,
+                share_link=share_link,
+                is_extracted=False
+            )
+            db.session.add(file_record)
+            db.session.commit()
+            
+            # Limpar arquivos temporários
+            shutil.rmtree(temp_dir)
+            
+            return jsonify({
+                'message': 'Arquivos compactados com sucesso',
+                'share_link': share_link,
+                'expires_at': file_record.expires_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+            
+        except Exception as e:
+            # Limpar em caso de erro
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+            return jsonify({'error': 'Erro ao compactar arquivos'}), 500
 
-@app.route('/extract', methods=['GET', 'POST'])
+@app.route('/extract', methods=['POST'])
 def extract():
-    if request.method == 'GET':
-        return redirect(url_for('index'))
-        
     if 'zip_file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo enviado'}), 400
     
@@ -134,27 +197,11 @@ def extract():
         db.session.add(file_record)
         db.session.commit()
         
-        return redirect(url_for('extract_file', share_link=share_link))
-        
-    except Exception as e:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        return jsonify({'error': 'Erro ao processar arquivo'}), 500
-
-@app.route('/extract/<share_link>')
-def extract_file(share_link):
-    file_record = File.query.filter_by(share_link=share_link).first_or_404()
-    
-    if datetime.utcnow() > file_record.expires_at:
-        return jsonify({'error': 'Link expirado'}), 410
-    
-    if not file_record.is_extracted:
-        # Criar diretório único para os arquivos extraídos
+        # Extrair arquivos imediatamente
         extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(uuid.uuid4()))
         os.makedirs(extract_dir, exist_ok=True)
         
-        # Extrair arquivos
-        with zipfile.ZipFile(file_record.file_path, 'r') as zip_ref:
+        with zipfile.ZipFile(temp_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
         
         # Listar arquivos extraídos
@@ -174,6 +221,26 @@ def extract_file(share_link):
         file_record.extracted_path = extract_dir
         file_record.expires_at = datetime.utcnow() + timedelta(hours=1)  # Expira em 1 hora
         db.session.commit()
+        
+        return jsonify({
+            'message': 'Arquivo extraído com sucesso',
+            'share_link': share_link,
+            'expires_at': file_record.expires_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        if os.path.exists(extract_dir):
+            shutil.rmtree(extract_dir)
+        return jsonify({'error': 'Erro ao extrair arquivo'}), 500
+
+@app.route('/extract/<share_link>')
+def extract_file(share_link):
+    file_record = File.query.filter_by(share_link=share_link).first_or_404()
+    
+    if datetime.utcnow() > file_record.expires_at:
+        return jsonify({'error': 'Link expirado'}), 410
     
     return render_template('extracted.html', file_record=file_record)
 
