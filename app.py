@@ -50,18 +50,47 @@ def init_db():
     with app.app_context():
         # Verifica se o diretório de migrações existe
         migrations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'migrations')
-        if not os.path.exists(migrations_dir):
-            # Inicializa o sistema de migração
-            subprocess.run(['flask', 'db', 'init'], check=True)
         
-        # Cria as migrações
-        subprocess.run(['flask', 'db', 'migrate', '-m', 'Initial migration'], check=True)
-        
-        # Aplica as migrações
-        subprocess.run(['flask', 'db', 'upgrade'], check=True)
-        
-        # Cria as tabelas se não existirem
-        db.create_all()
+        try:
+            if not os.path.exists(migrations_dir):
+                # Inicializa o sistema de migração
+                subprocess.run(['flask', 'db', 'init'], check=True)
+            
+            # Tenta criar as migrações
+            try:
+                subprocess.run(['flask', 'db', 'migrate', '-m', 'Initial migration'], check=True)
+            except subprocess.CalledProcessError as e:
+                # Se falhar, pode ser porque já existem migrações
+                print("Aviso: Migrações já existem ou não há mudanças para migrar.")
+            
+            # Tenta aplicar as migrações
+            try:
+                subprocess.run(['flask', 'db', 'upgrade'], check=True)
+            except subprocess.CalledProcessError as e:
+                # Se falhar, tenta recriar o banco de dados
+                print("Aviso: Tentando recriar o banco de dados...")
+                if os.path.exists('dzip.db'):
+                    os.remove('dzip.db')
+                subprocess.run(['flask', 'db', 'upgrade'], check=True)
+            
+            # Cria as tabelas se não existirem
+            db.create_all()
+            
+        except Exception as e:
+            print(f"Erro ao inicializar o banco de dados: {str(e)}")
+            # Tenta recriar o banco de dados do zero
+            try:
+                if os.path.exists('dzip.db'):
+                    os.remove('dzip.db')
+                if os.path.exists(migrations_dir):
+                    shutil.rmtree(migrations_dir)
+                subprocess.run(['flask', 'db', 'init'], check=True)
+                subprocess.run(['flask', 'db', 'migrate', '-m', 'Initial migration'], check=True)
+                subprocess.run(['flask', 'db', 'upgrade'], check=True)
+                db.create_all()
+            except Exception as e2:
+                print(f"Erro crítico ao recriar o banco de dados: {str(e2)}")
+                raise
 
 @app.route('/')
 def index():
