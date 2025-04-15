@@ -74,7 +74,7 @@ def upload_file():
             files_to_zip.append(file_path)
     
     # Compactar arquivos
-    pyminizip.compress_multiple(files_to_zip, [], zip_path, "", 5)
+    pyminizip.compress_multiple(files_to_zip, [], zip_path, "", 9)  # Nível máximo de compressão (9)
     
     # Criar registro no banco de dados
     share_link = str(uuid.uuid4())
