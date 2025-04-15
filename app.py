@@ -130,7 +130,9 @@ def upload_file():
                     original_filename=filename,
                     file_path=file_path,
                     share_link=share_link,
-                    is_extracted=False
+                    is_extracted=False,
+                    extracted_files=None,
+                    extracted_path=None
                 )
                 db.session.add(file_record)
                 db.session.commit()
@@ -191,7 +193,9 @@ def upload_file():
                     original_filename=f"arquivos_compactados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                     file_path=zip_path,
                     share_link=share_link,
-                    is_extracted=False
+                    is_extracted=False,
+                    extracted_files=None,
+                    extracted_path=None
                 )
                 db.session.add(file_record)
                 db.session.commit()
@@ -246,18 +250,6 @@ def extract():
         
         extract_dir = None
         try:
-            # Criar registro no banco de dados
-            share_link = str(uuid.uuid4())
-            file_record = File(
-                filename=os.path.basename(temp_path),
-                original_filename=filename,
-                file_path=temp_path,
-                share_link=share_link,
-                is_extracted=False
-            )
-            db.session.add(file_record)
-            db.session.commit()
-            
             # Extrair arquivos imediatamente
             extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(uuid.uuid4()))
             os.makedirs(extract_dir, exist_ok=True)
@@ -276,11 +268,19 @@ def extract():
                         'size': os.path.getsize(file_path)
                     })
             
-            # Atualizar registro no banco de dados
-            file_record.is_extracted = True
-            file_record.extracted_files = extracted_files
-            file_record.extracted_path = extract_dir
-            file_record.expires_at = datetime.utcnow() + timedelta(hours=1)  # Expira em 1 hora
+            # Criar registro no banco de dados
+            share_link = str(uuid.uuid4())
+            file_record = File(
+                filename=os.path.basename(temp_path),
+                original_filename=filename,
+                file_path=temp_path,
+                share_link=share_link,
+                is_extracted=True,
+                extracted_files=extracted_files,
+                extracted_path=extract_dir,
+                expires_at=datetime.utcnow() + timedelta(hours=1)
+            )
+            db.session.add(file_record)
             db.session.commit()
             
             return jsonify({
@@ -291,6 +291,8 @@ def extract():
             
         except Exception as e:
             db.session.rollback()
+            if extract_dir and os.path.exists(extract_dir):
+                shutil.rmtree(extract_dir)
             raise e
             
         finally:
@@ -303,12 +305,19 @@ def extract():
 
 @app.route('/extract/<share_link>')
 def extract_file(share_link):
-    file_record = File.query.filter_by(share_link=share_link).first_or_404()
-    
-    if datetime.utcnow() > file_record.expires_at:
-        return jsonify({'error': 'Link expirado'}), 410
-    
-    return render_template('extracted.html', file_record=file_record)
+    try:
+        file_record = File.query.filter_by(share_link=share_link).first_or_404()
+        
+        if datetime.utcnow() > file_record.expires_at:
+            return jsonify({'error': 'Link expirado'}), 410
+        
+        if not file_record.is_extracted or not file_record.extracted_files:
+            return jsonify({'error': 'Arquivo não foi extraído corretamente'}), 400
+        
+        return render_template('extracted.html', file_record=file_record)
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao acessar arquivo: {str(e)}'}), 500
 
 @app.route('/download/extracted/<int:file_id>/<path:filename>')
 def download_extracted_file(file_id, filename):
