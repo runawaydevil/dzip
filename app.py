@@ -184,6 +184,7 @@ def extract():
     temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{filename}")
     file.save(temp_path)
     
+    extract_dir = None
     try:
         # Criar registro no banco de dados
         share_link = str(uuid.uuid4())
@@ -229,9 +230,10 @@ def extract():
         })
         
     except Exception as e:
+        # Limpar em caso de erro
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        if os.path.exists(extract_dir):
+        if extract_dir and os.path.exists(extract_dir):
             shutil.rmtree(extract_dir)
         return jsonify({'error': 'Erro ao extrair arquivo'}), 500
 
