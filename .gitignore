@@ -24,31 +24,31 @@ wheels/
 venv/
 ENV/
 env/
-.env
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
 
-# Flask
-instance/
-.webassets-cache
-
-# SQLite
+# Database
 *.db
 *.sqlite3
 
 # Uploads
 uploads/
 *.zip
-*.rar
 
 # Logs
 *.log
-logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
 
 # Coverage
 htmlcov/
