@@ -8,6 +8,7 @@
 [![1337](https://img.shields.io/badge/1337-H4X0R-orange)](https://github.com/RunawayDevil)
 [![Matrix](https://img.shields.io/badge/Matrix-Neo-green)](https://github.com/RunawayDevil)
 [![Terminal](https://img.shields.io/badge/Terminal-%3E_%20-green)](https://github.com/RunawayDevil)
+[![Port](https://img.shields.io/badge/Port-5009-blue)](https://github.com/RunawayDevil)
 
 DZip é uma aplicação web que permite compactar e compartilhar arquivos de forma simples e segura. Com suporte para arquivos ZIP e RAR, você pode compactar até 100 arquivos de uma vez, com tamanho total máximo de 500MB.
 
@@ -20,6 +21,7 @@ DZip é uma aplicação web que permite compactar e compartilhar arquivos de for
 - Interface moderna e responsiva
 - Upload por drag-and-drop
 - Compartilhamento de links para download
+- Configuração flexível via variáveis de ambiente
 
 ## Requisitos
 
@@ -77,12 +79,12 @@ python app.py
 
 2. Acesse a aplicação em seu navegador:
 ```
-http://localhost:5000
+http://localhost:5009
 ```
 
 Para produção, recomenda-se usar o Gunicorn:
 ```bash
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+gunicorn -w 4 -b 0.0.0.0:5009 app:app
 ```
 
 ## Uso
@@ -100,6 +102,12 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 - Arquivos são automaticamente removidos após a expiração do link
 
 ## Changelog
+
+### v1.0.1 (2025-01-02)
+- Configuração da porta padrão alterada para 5009
+- Melhorias na configuração via variáveis de ambiente
+- Otimização do sistema de upload
+- Correção de bugs na compactação de arquivos
 
 ### v1.0.0 (2025-01-01)
 - Lançamento inicial do DZip
