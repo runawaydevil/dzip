@@ -178,9 +178,12 @@ def upload_file():
                     file.save(file_path)
                     saved_files.append(file_path)
                 
-                # Criar arquivo ZIP
-                zip_filename = f"{uuid.uuid4()}.zip"
-                zip_path = os.path.join(app.config['UPLOAD_FOLDER'], zip_filename)
+                # Criar nome personalizado para o arquivo ZIP
+                base_filename = os.path.splitext(secure_filename(files[0].filename))[0]
+                if len(files) > 1:
+                    base_filename = f"{base_filename}_e_mais_{len(files)-1}_arquivos"
+                zip_filename = f"dzip_{base_filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                zip_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{zip_filename}")
                 
                 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, 9) as zipf:
                     for file_path in saved_files:
@@ -189,8 +192,8 @@ def upload_file():
                 # Criar registro no banco de dados
                 share_link = str(uuid.uuid4())
                 file_record = File(
-                    filename=zip_filename,
-                    original_filename=f"arquivos_compactados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                    filename=os.path.basename(zip_path),
+                    original_filename=zip_filename,
                     file_path=zip_path,
                     share_link=share_link,
                     is_extracted=False,
