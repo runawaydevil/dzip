@@ -399,7 +399,33 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    window.location.href = `/extract/${data.share_link}`;
+                    // Atualizar barra de progresso
+                    updateProgress('compression-progress', 'compression-progress-text', 100);
+                    
+                    // Mostrar link de download
+                    const shareLink = `${window.location.origin}/download/${data.share_link}`;
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = shareLink;
+                    downloadLink.className = 'text-blue-600 hover:text-blue-800';
+                    downloadLink.textContent = 'Baixar arquivo compactado';
+                    downloadLink.download = data.original_filename;
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.id = 'compression-result';
+                    resultDiv.innerHTML = `
+                        <div class="mt-4 p-4 bg-green-100 rounded-lg">
+                            <p class="text-green-800">Arquivos compactados com sucesso!</p>
+                            <p class="text-sm text-gray-600">Link válido até: ${new Date(data.expires_at).toLocaleString()}</p>
+                            <div class="mt-2">
+                                ${downloadLink.outerHTML}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Inserir o resultado após o formulário
+                    const zipForm = document.getElementById('zipForm');
+                    zipForm.parentNode.insertBefore(resultDiv, zipForm.nextSibling);
+                    
                 } else {
                     alert(data.error || 'Erro ao compactar arquivos');
                 }
