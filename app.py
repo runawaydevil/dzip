@@ -117,7 +117,7 @@ if __name__ == '__main__':
         db.create_all()
     
     host = os.environ.get('HOST', '0.0.0.0')
-    port = int(os.environ.get('PORT', 5000))
+    port = 5009  # Forçando a porta 5009
     debug = os.environ.get('DEBUG', 'False').lower() == 'true'
     
     app.run(host=host, port=port, debug=debug) 
