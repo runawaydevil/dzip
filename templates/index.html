@@ -111,6 +111,15 @@
                             <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivos selecionados:</h3>
                             <ul class="space-y-2"></ul>
                         </div>
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Progresso de Compactação</span>
+                                <span class="text-sm font-medium text-gray-700" id="compression-progress-text">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="compression-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
                         <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
                             <i class="fas fa-file-archive mr-2"></i>Compactar Arquivos
                         </button>
@@ -131,6 +140,15 @@
                         <div id="extractFileInfo" class="hidden">
                             <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivo selecionado:</h3>
                             <p class="text-sm sm:text-base text-gray-600"></p>
+                        </div>
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Progresso de Extração</span>
+                                <span class="text-sm font-medium text-gray-700" id="extraction-progress-text">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="extraction-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
                         </div>
                         <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
                             <i class="fas fa-file-zipper mr-2"></i>Extrair Arquivo
@@ -461,6 +479,132 @@
             document.execCommand('copy');
             alert('Link copiado para a área de transferência!');
         }
+
+        // Função para atualizar a barra de progresso
+        function updateProgress(progressBarId, progressTextId, progress) {
+            const progressBar = document.getElementById(progressBarId);
+            const progressText = document.getElementById(progressTextId);
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${progress}%`;
+        }
+
+        // Função para compactar arquivos
+        async function compressFiles(files) {
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('files[]', file);
+            });
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao compactar arquivos');
+                }
+
+                const data = await response.json();
+                
+                // Atualizar barra de progresso
+                updateProgress('compression-progress', 'compression-progress-text', 100);
+                
+                // Mostrar link de download
+                const shareLink = `${window.location.origin}/download/${data.share_link}`;
+                const downloadLink = document.createElement('a');
+                downloadLink.href = shareLink;
+                downloadLink.className = 'text-blue-600 hover:text-blue-800';
+                downloadLink.textContent = 'Baixar arquivo compactado';
+                downloadLink.download = data.original_filename;
+                
+                const resultDiv = document.getElementById('compression-result');
+                resultDiv.innerHTML = `
+                    <div class="mt-4 p-4 bg-green-100 rounded-lg">
+                        <p class="text-green-800">Arquivos compactados com sucesso!</p>
+                        <p class="text-sm text-gray-600">Link válido até: ${new Date(data.expires_at).toLocaleString()}</p>
+                        <div class="mt-2">
+                            ${downloadLink.outerHTML}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                const resultDiv = document.getElementById('compression-result');
+                resultDiv.innerHTML = `
+                    <div class="mt-4 p-4 bg-red-100 rounded-lg">
+                        <p class="text-red-800">Erro ao compactar arquivos: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Função para extrair arquivo
+        async function extractFile(file) {
+            const formData = new FormData();
+            formData.append('zip_file', file);
+
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao extrair arquivo');
+                }
+
+                const data = await response.json();
+                
+                // Atualizar barra de progresso
+                updateProgress('extraction-progress', 'extraction-progress-text', 100);
+                
+                // Redirecionar para a página de arquivos extraídos
+                window.location.href = `/extract/${data.share_link}`;
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                const resultDiv = document.getElementById('extraction-result');
+                resultDiv.innerHTML = `
+                    <div class="mt-4 p-4 bg-red-100 rounded-lg">
+                        <p class="text-red-800">Erro ao extrair arquivo: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Modificar o evento de submit do formulário de compactação
+        document.getElementById('compression-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const files = Array.from(this.files.files);
+            if (files.length === 0) {
+                alert('Por favor, selecione pelo menos um arquivo');
+                return;
+            }
+            
+            // Resetar barra de progresso
+            updateProgress('compression-progress', 'compression-progress-text', 0);
+            
+            // Iniciar compactação
+            await compressFiles(files);
+        });
+
+        // Modificar o evento de submit do formulário de extração
+        document.getElementById('extraction-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const file = this.zip_file.files[0];
+            if (!file) {
+                alert('Por favor, selecione um arquivo ZIP');
+                return;
+            }
+            
+            // Resetar barra de progresso
+            updateProgress('extraction-progress', 'extraction-progress-text', 0);
+            
+            // Iniciar extração
+            await extractFile(file);
+        });
     </script>
 </body>
 </html> 
