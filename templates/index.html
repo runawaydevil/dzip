@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DZip - Compactador e Extrator de Arquivos</title>
+    <title>DZip - Compartilhamento de Arquivos</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
@@ -19,151 +19,165 @@
             border-color: #4299e1;
             background-color: #ebf8ff;
         }
-        .progress-bar {
-            width: 0%;
-            height: 0.5rem;
-            background-color: #4299e1;
-            border-radius: 0.25rem;
-            transition: width 0.3s ease;
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .text-4xl {
+                font-size: 1.875rem;
+            }
+            .p-6 {
+                padding: 1rem;
+            }
+            .text-sm {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+    <div class="container mx-auto px-4 py-4 sm:py-8">
+        <header class="text-center mb-6 sm:mb-12">
+            <h1 class="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-file-archive text-blue-500"></i> DZip
             </h1>
-            <p class="text-gray-600">Compacte e extraia seus arquivos com facilidade</p>
-            <div class="mt-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 max-w-md mx-auto" role="alert">
+            <p class="text-sm sm:text-base text-gray-600">Compartilhe seus arquivos com segurança</p>
+            <div class="mt-2 sm:mt-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-2 sm:p-4 max-w-md mx-auto text-xs sm:text-sm" role="alert">
                 <p class="font-bold">Aviso</p>
-                <p>Utilizamos compressão nível 9 (máxima) para garantir o menor tamanho possível dos arquivos. Isso pode aumentar o tempo de processamento, mas resulta em arquivos menores para download.</p>
+                <p>Os arquivos compartilhados estarão disponíveis por 7 dias. Após esse período, eles serão automaticamente removidos.</p>
             </div>
         </header>
 
         <main class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex space-x-4 mb-6">
-                    <button id="zipTab" class="flex-1 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                        <i class="fas fa-file-archive mr-2"></i>Compactar
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <form id="uploadForm" class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center drop-zone" id="dropZone">
+                        <input type="file" name="file" class="hidden" id="fileInput">
+                        <label for="fileInput" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm sm:text-base text-gray-600">Arraste um arquivo aqui ou clique para selecionar</p>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-2">Máximo de 100MB</p>
+                        </label>
+                    </div>
+                    <div id="fileInfo" class="hidden">
+                        <h3 class="font-semibold mb-2 text-sm sm:text-base">Arquivo selecionado:</h3>
+                        <p class="text-sm sm:text-base text-gray-600"></p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition text-sm sm:text-base">
+                        <i class="fas fa-upload mr-2"></i>Enviar Arquivo
                     </button>
-                    <button id="extractTab" class="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
-                        <i class="fas fa-file-zipper mr-2"></i>Extrair
-                    </button>
-                </div>
+                </form>
 
-                <div id="zipSection">
-                    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="space-y-4">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                            <input type="file" name="files[]" multiple class="hidden" id="fileInput">
-                            <label for="fileInput" class="cursor-pointer">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-gray-600">Arraste arquivos aqui ou clique para selecionar</p>
-                                <p class="text-sm text-gray-500 mt-2">Máximo de 10 arquivos, 100MB no total</p>
-                            </label>
-                        </div>
-                        <div id="fileList" class="hidden">
-                            <h3 class="font-semibold mb-2">Arquivos selecionados:</h3>
-                            <ul class="space-y-2"></ul>
-                        </div>
-                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
-                            <i class="fas fa-file-archive mr-2"></i>Compactar Arquivos
+                <div id="shareLink" class="hidden mt-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
+                    <p class="font-bold">Arquivo enviado com sucesso!</p>
+                    <p class="mt-2">Link de compartilhamento:</p>
+                    <div class="flex items-center mt-2">
+                        <input type="text" id="linkInput" class="flex-1 p-2 border rounded-l" readonly>
+                        <button onclick="copyLink()" class="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600">
+                            <i class="fas fa-copy"></i>
                         </button>
-                    </form>
-                </div>
-
-                <div id="extractSection" class="hidden">
-                    <form action="{{ url_for('extract') }}" method="post" class="space-y-4">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                            <input type="file" name="zip_file" class="hidden" id="zipInput" accept=".zip">
-                            <label for="zipInput" class="cursor-pointer">
-                                <i class="fas fa-file-zipper text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-gray-600">Arraste um arquivo ZIP aqui ou clique para selecionar</p>
-                                <p class="text-sm text-gray-500 mt-2">Máximo de 100MB</p>
-                            </label>
-                        </div>
-                        <div id="zipFileInfo" class="hidden">
-                            <h3 class="font-semibold mb-2">Arquivo selecionado:</h3>
-                            <p class="text-gray-600"></p>
-                        </div>
-                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
-                            <i class="fas fa-file-zipper mr-2"></i>Extrair Arquivo
-                        </button>
-                    </form>
+                    </div>
+                    <p class="text-xs mt-2">Este link expira em: <span id="expiryDate"></span></p>
                 </div>
             </div>
         </main>
     </div>
 
-    <footer class="text-center mt-12 text-gray-600">
+    <footer class="text-center mt-8 sm:mt-12 text-gray-600 text-xs sm:text-sm">
         <p>Desenvolvido por <a href="https://github.com/RunawayDevil" target="_blank" class="text-blue-500 hover:text-blue-700">RunawayDevil</a> - 2025</p>
     </footer>
 
     <script>
-        // Gerenciamento das abas
-        const zipTab = document.getElementById('zipTab');
-        const extractTab = document.getElementById('extractTab');
-        const zipSection = document.getElementById('zipSection');
-        const extractSection = document.getElementById('extractSection');
-
-        zipTab.addEventListener('click', () => {
-            zipTab.classList.add('bg-blue-500', 'text-white');
-            zipTab.classList.remove('bg-gray-200', 'text-gray-700');
-            extractTab.classList.add('bg-gray-200', 'text-gray-700');
-            extractTab.classList.remove('bg-blue-500', 'text-white');
-            zipSection.classList.remove('hidden');
-            extractSection.classList.add('hidden');
-        });
-
-        extractTab.addEventListener('click', () => {
-            extractTab.classList.add('bg-blue-500', 'text-white');
-            extractTab.classList.remove('bg-gray-200', 'text-gray-700');
-            zipTab.classList.add('bg-gray-200', 'text-gray-700');
-            zipTab.classList.remove('bg-blue-500', 'text-white');
-            extractSection.classList.remove('hidden');
-            zipSection.classList.add('hidden');
-        });
-
-        // Gerenciamento de arquivos para compactação
+        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
-        const fileListUl = fileList.querySelector('ul');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileInfoP = fileInfo.querySelector('p');
+        const uploadForm = document.getElementById('uploadForm');
+        const shareLink = document.getElementById('shareLink');
+        const linkInput = document.getElementById('linkInput');
+        const expiryDate = document.getElementById('expiryDate');
 
-        fileInput.addEventListener('change', () => {
-            fileListUl.innerHTML = '';
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileInfo();
+        }
+
+        fileInput.addEventListener('change', updateFileInfo);
+
+        function updateFileInfo() {
             if (fileInput.files.length > 0) {
-                fileList.classList.remove('hidden');
-                Array.from(fileInput.files).forEach(file => {
-                    const li = document.createElement('li');
-                    li.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
-                    li.innerHTML = `
-                        <span class="flex items-center">
-                            <i class="fas fa-file text-gray-400 mr-2"></i>
-                            ${file.name}
-                        </span>
-                        <span class="text-sm text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
-                    `;
-                    fileListUl.appendChild(li);
+                const file = fileInput.files[0];
+                fileInfo.classList.remove('hidden');
+                fileInfoP.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            } else {
+                fileInfo.classList.add('hidden');
+            }
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
                 });
-            } else {
-                fileList.classList.add('hidden');
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    shareLink.classList.remove('hidden');
+                    linkInput.value = `${window.location.origin}/download/${data.share_link}`;
+                    expiryDate.textContent = new Date(data.expires_at).toLocaleString('pt-BR');
+                    uploadForm.reset();
+                    fileInfo.classList.add('hidden');
+                } else {
+                    alert(data.error || 'Erro ao enviar arquivo');
+                }
+            } catch (error) {
+                alert('Erro ao enviar arquivo');
             }
         });
 
-        // Gerenciamento de arquivo ZIP para extração
-        const zipInput = document.getElementById('zipInput');
-        const zipFileInfo = document.getElementById('zipFileInfo');
-        const zipFileInfoP = zipFileInfo.querySelector('p');
-
-        zipInput.addEventListener('change', () => {
-            if (zipInput.files.length > 0) {
-                const file = zipInput.files[0];
-                zipFileInfo.classList.remove('hidden');
-                zipFileInfoP.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            } else {
-                zipFileInfo.classList.add('hidden');
-            }
-        });
+        function copyLink() {
+            linkInput.select();
+            document.execCommand('copy');
+            alert('Link copiado para a área de transferência!');
+        }
     </script>
 </body>
 </html> 

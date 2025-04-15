@@ -7,44 +7,64 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    <style>
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .text-4xl {
+                font-size: 1.875rem;
+            }
+            .p-6 {
+                padding: 1rem;
+            }
+            .text-sm {
+                font-size: 0.75rem;
+            }
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+    <div class="container mx-auto px-4 py-4 sm:py-8">
+        <header class="text-center mb-6 sm:mb-12">
+            <h1 class="text-2xl sm:text-4xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-file-archive text-blue-500"></i> DZip
             </h1>
-            <p class="text-gray-600">Arquivos Extraídos</p>
+            <p class="text-sm sm:text-base text-gray-600">Arquivos Extraídos</p>
         </header>
 
         <main class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="mb-6">
-                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <div class="mb-4 sm:mb-6">
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-2 sm:p-4 text-xs sm:text-sm" role="alert">
                         <p class="font-bold">Aviso</p>
                         <p>Estes arquivos estarão disponíveis por 1 hora. Após esse período, eles serão automaticamente removidos.</p>
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Arquivos Extraídos</h2>
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
+                    <h2 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-0">Arquivos Extraídos</h2>
                     <a href="{{ url_for('download_all_extracted', file_id=file_record.id) }}" 
-                       class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                       class="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded hover:bg-blue-600 transition text-sm sm:text-base">
                         <i class="fas fa-download mr-2"></i>Baixar Todos
                     </a>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white">
+                <div class="table-responsive">
+                    <table class="min-w-full bg-white text-xs sm:text-sm">
                         <thead>
                             <tr>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="py-2 px-2 sm:px-4 border-b border-gray-200 bg-gray-50 text-left font-semibold text-gray-600 uppercase tracking-wider">
                                     Nome do Arquivo
                                 </th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="py-2 px-2 sm:px-4 border-b border-gray-200 bg-gray-50 text-left font-semibold text-gray-600 uppercase tracking-wider">
                                     Tamanho
                                 </th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="py-2 px-2 sm:px-4 border-b border-gray-200 bg-gray-50 text-left font-semibold text-gray-600 uppercase tracking-wider">
                                     Ações
                                 </th>
                             </tr>
@@ -52,16 +72,18 @@
                         <tbody>
                             {% for file in file_record.extracted_files %}
                             <tr class="hover:bg-gray-50">
-                                <td class="py-2 px-4 border-b border-gray-200">
-                                    <i class="fas fa-file mr-2 text-gray-400"></i>
-                                    {{ file.name }}
+                                <td class="py-2 px-2 sm:px-4 border-b border-gray-200">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file mr-2 text-gray-400"></i>
+                                        <span class="truncate max-w-[150px] sm:max-w-[300px]">{{ file.name }}</span>
+                                    </div>
                                 </td>
-                                <td class="py-2 px-4 border-b border-gray-200">
+                                <td class="py-2 px-2 sm:px-4 border-b border-gray-200 whitespace-nowrap">
                                     {{ (file.size / 1024)|round(2) }} KB
                                 </td>
-                                <td class="py-2 px-4 border-b border-gray-200">
+                                <td class="py-2 px-2 sm:px-4 border-b border-gray-200">
                                     <a href="{{ url_for('download_extracted_file', file_id=file_record.id, filename=file.name) }}" 
-                                       class="text-blue-500 hover:text-blue-700">
+                                       class="text-blue-500 hover:text-blue-700 text-sm sm:text-base">
                                         <i class="fas fa-download"></i> Baixar
                                     </a>
                                 </td>
@@ -71,8 +93,8 @@
                     </table>
                 </div>
 
-                <div class="mt-6 text-center">
-                    <a href="{{ url_for('index') }}" class="text-blue-500 hover:text-blue-700">
+                <div class="mt-4 sm:mt-6 text-center">
+                    <a href="{{ url_for('index') }}" class="text-blue-500 hover:text-blue-700 text-sm sm:text-base">
                         <i class="fas fa-arrow-left mr-2"></i>Voltar para a página inicial
                     </a>
                 </div>
@@ -80,7 +102,7 @@
         </main>
     </div>
 
-    <footer class="text-center mt-12 text-gray-600">
+    <footer class="text-center mt-8 sm:mt-12 text-gray-600 text-xs sm:text-sm">
         <p>Desenvolvido por <a href="https://github.com/RunawayDevil" target="_blank" class="text-blue-500 hover:text-blue-700">RunawayDevil</a> - 2025</p>
     </footer>
 </body>
