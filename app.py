@@ -11,6 +11,7 @@ import uuid
 import zipfile
 import shutil
 import tempfile
+import subprocess
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -43,6 +44,24 @@ class File(db.Model):
 
     def __repr__(self):
         return f'<File {self.filename}>'
+
+def init_db():
+    """Inicializa o banco de dados e executa as migrações necessárias."""
+    with app.app_context():
+        # Verifica se o diretório de migrações existe
+        migrations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'migrations')
+        if not os.path.exists(migrations_dir):
+            # Inicializa o sistema de migração
+            subprocess.run(['flask', 'db', 'init'], check=True)
+        
+        # Cria as migrações
+        subprocess.run(['flask', 'db', 'migrate', '-m', 'Initial migration'], check=True)
+        
+        # Aplica as migrações
+        subprocess.run(['flask', 'db', 'upgrade'], check=True)
+        
+        # Cria as tabelas se não existirem
+        db.create_all()
 
 @app.route('/')
 def index():
@@ -313,8 +332,8 @@ def cleanup_expired_files():
         db.session.commit()
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
+    # Inicializa o banco de dados automaticamente
+    init_db()
     
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5009))
